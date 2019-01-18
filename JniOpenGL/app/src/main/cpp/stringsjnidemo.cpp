@@ -1,6 +1,8 @@
 #include <jni.h>
 #include <string>
-#include <stdlib.h>
+#include <random>
+#include <iostream>
+#include <android/log.h>
 
 /**
  * These will be the first adjective, with a -ly added to modify the second adjective
@@ -140,15 +142,40 @@ std::string animalCorpus[] = {
         "mongoose",
         "mongrel"
 };
+std::string testStrings[] = {"hello","world"};
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_jeffcreswell_jniopengl_jni_JniHooks_randomStringFromJNI(
+Java_com_jeffcreswell_jniopengl_jni_JniHooks_randomString(
         JNIEnv *env,
-        jobject /* this */) {
+        jobject thiz) {
     // todo: choose randomly from adj1, adj2, and animal corpi and then combine for the result string
 
     // random value from 0 to the size of our adjective1 corpus, which is calculated
     // as the entire size of the array divided by the size of String object
-    int adj1Index = rand() % (sizeof(adjective1Corpus) / sizeof(std::string));
-    std::string hello = "Hello from C++";
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 randomIndexGenerator(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<> randomIndexDistribution(0,
+            (sizeof(testStrings) / sizeof(std::string))-1);
+    int adj1Index = randomIndexDistribution(randomIndexGenerator);
+    __android_log_print(ANDROID_LOG_DEBUG, "jnigldemo", "JNI returning random adj: %s",
+            testStrings[adj1Index].c_str());
+    std::string hello = "hello world";
     return env->NewStringUTF(hello.c_str());
 }
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_jeffcreswell_jniopengl_jni_JniHooks_testString(
+        JNIEnv *env,
+        jobject ) {
+    // todo: whelp, apparently the NDK's hello world example crashes... good old JNI.
+    // Anyway, it looks like the workaround is to receive/create a jstring and then
+    // call env->GetStringUTFChars(jstr, 0) to get the modified UTF 8 encoded version as char*
+    // and then create a std::string over that char*.  THEN we should be able do the NewStringUTF() shuffle.
+    // Alternatively, either receive the string from Java so we don't have to worry about encoding
+    // or create and return a jobject that is actually a java.land.String based on the actual string data
+    // we want to use.  Even that requires GetStringUTFChars() over the encoding string, though, so
+    // there's not really a nice solution AFAICS
+    std::string helloString = "hello strings from JNI";
+    return env->NewStringUTF(helloString.c_str());
+}
+
+

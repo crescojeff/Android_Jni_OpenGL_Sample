@@ -20,4 +20,11 @@ public class JniHooks {
      */
     public static native void glStepFrame();
 
+    /**
+     * Randomly generates an {adjective-ly adjective animal} string and returns it
+     * @return random string
+     */
+    public static native String randomString();
+    public static native String testString();
+
 }
