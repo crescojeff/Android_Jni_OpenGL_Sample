@@ -11,27 +11,28 @@ import com.jeffcreswell.jniopengl.ui.GlView;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "JniGlDemoActivity";
 
-    private GlView mGlView;
+    //private GlView mGlView;
 
     @Override protected void onCreate(Bundle savedData) {
         super.onCreate(savedData);
-        mGlView = new GlView(getApplication());
-        setContentView(mGlView);
+        //mGlView = new GlView(getApplication());
+        //setContentView(mGlView);
+        setContentView(R.layout.activity_main);
 
-        Log.d(TAG,"random string: "+ JniHooks.testString());
+        Log.d(TAG,"random string: "+ JniHooks.randomString());
     }
 
     @Override protected void onPause() {
         super.onPause();
         // GLSurfaceView must be told when it will no longer be visible so it
         // can release native resources
-        mGlView.onPause();
+        //mGlView.onPause();
     }
 
     @Override protected void onResume() {
         super.onResume();
         // GLSurfaceView must be told when it will be visible (again) so it can (re)acquire resources
         // and start/continue rendering
-        mGlView.onResume();
+        //mGlView.onResume();
     }
 }
