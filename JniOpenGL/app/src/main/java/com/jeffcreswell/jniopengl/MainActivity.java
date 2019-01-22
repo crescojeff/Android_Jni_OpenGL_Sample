@@ -13,13 +13,18 @@ import com.jeffcreswell.jniopengl.ui.JniStringItemFragment;
 public class MainActivity extends AppCompatActivity implements JniStringItemFragment.OnListFragmentInteractionListener {
     private static final String TAG = "JniGlDemoActivity";
 
-    //private GlView mGlView;
+    private GlView mGlView;
 
     @Override protected void onCreate(Bundle savedData) {
         super.onCreate(savedData);
         //mGlView = new GlView(getApplication());
         //setContentView(mGlView);
         setContentView(R.layout.activity_main);
+        mGlView = (GlView) findViewById(R.id.my_gl_surfaceview);
+        // todo: the sample code creates the GLSurfaceView in code and then sets it as the only
+        // content -- if loading from XMl layout proves too troublesome, we might consider
+        // having a FrameLayout or similar simple placeholder in the layout file to which we then
+        // attach the glsurfaceview in code here.
 
         Log.d(TAG,"random string: "+ JniHooks.randomString());
     }
@@ -28,14 +33,14 @@ public class MainActivity extends AppCompatActivity implements JniStringItemFrag
         super.onPause();
         // GLSurfaceView must be told when it will no longer be visible so it
         // can release native resources
-        //mGlView.onPause();
+        mGlView.onPause();
     }
 
     @Override protected void onResume() {
         super.onResume();
         // GLSurfaceView must be told when it will be visible (again) so it can (re)acquire resources
         // and start/continue rendering
-        //mGlView.onResume();
+        mGlView.onResume();
     }
 
     @Override
