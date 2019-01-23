@@ -1,6 +1,7 @@
 package com.jeffcreswell.jniopengl.ui;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -171,6 +172,9 @@ public class GlView extends GLSurfaceView {
         }
 
         public void onSurfaceChanged(GL10 gl, int width, int height) {
+            Log.d(TAG,"onSurfaceChanged; sending width: "+width+" and height: "+height
+                    +". For reference, display width is "+ Resources.getSystem().getDisplayMetrics().widthPixels
+                    +" and display height is "+Resources.getSystem().getDisplayMetrics().heightPixels);
             JniHooks.glInit(width,height);
         }
 
