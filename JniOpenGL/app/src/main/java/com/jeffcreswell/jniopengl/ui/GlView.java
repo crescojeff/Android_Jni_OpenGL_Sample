@@ -18,7 +18,8 @@ public class GlView extends GLSurfaceView {
     private static String TAG = "GlView-JniDemo";
     public GlView(Context context, AttributeSet attrs) {
         super(context,attrs);
-
+        // set up EGL for GLESv3
+        setEGLContextClientVersion(3);
         // rendering context with EGL metadata, such as EGL client API version
         setEGLContextFactory(new ContextFactory());
 
@@ -26,8 +27,8 @@ public class GlView extends GLSurfaceView {
         // that necessary hardware resources are allocated to render according to our specifications,
         // and that we fail fast if the hardware can't support same.
         // EGL is basically the glue that binds OpenGL rendering to the underlying platform's window system.
-        // For demo purposes, we'll go with the default RGB_565 opaque surface.
-        setEGLConfigChooser(new ConfigChooser(5,6,5,0,0,0));
+        // For demo purposes, we'll go with 8 bits/channel surface configuration.
+        setEGLConfigChooser(new ConfigChooser(8,8,8,8,0,0));
 
         // the renderer is responsible for drawing each frame
         setRenderer(new Renderer());
@@ -36,9 +37,9 @@ public class GlView extends GLSurfaceView {
     private static class ContextFactory implements GLSurfaceView.EGLContextFactory {
         private static int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
         public EGLContext createContext(EGL10 egl, EGLDisplay display, EGLConfig eglConfig) {
-            Log.w(TAG, "creating OpenGL ES 2.0 context");
+            Log.w(TAG, "creating OpenGL ES 3.0 context");
             checkEglError("Before eglCreateContext, our EGL interface says:", egl);
-            int[] attrib_list = {EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE };
+            int[] attrib_list = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL10.EGL_NONE };
             EGLContext context = egl.eglCreateContext(display, eglConfig, EGL10.EGL_NO_CONTEXT, attrib_list);
             checkEglError("After eglCreateContext, our EGL interface says:", egl);
             return context;

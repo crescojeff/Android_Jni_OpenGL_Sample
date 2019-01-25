@@ -17,7 +17,7 @@ add_library( # Sets the name of the library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        src/main/cpp/glsljnidemo.cpp
+        src/main/cpp/gles3jnidemo.cpp
         src/main/cpp/stringsjnidemo.cpp
         )
 
@@ -45,12 +45,6 @@ find_library( # Sets the name of the path variable.
         # Specifies the name of the NDK library that
         # you want CMake to locate.
         EGL)
-find_library( # Sets the name of the path variable.
-        gles-lib
-
-        # Specifies the name of the NDK library that
-        # you want CMake to locate.
-        GLESv2)
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
@@ -64,4 +58,4 @@ target_link_libraries( # Specifies the target library.
         ${log-lib}
         ${android-lib}
         ${egl-lib}
-        ${gles-lib})
+        GLESv3)

@@ -2,11 +2,8 @@
 #include <android/log.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-/* // GLM would allow for GLSL-like math and structs in GL, might be handy but is not provided as part of NDK
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform.hpp>
-*/
+#include "glm/glm.hpp"
+#include "glm/ext/matrix_transform.hpp" // glm::translate, glm::rotate, glm::scale
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
@@ -20,6 +17,10 @@
  */
 GLuint gProgram;
 /**
+ * Vertex Buffer Object we'll use to upload data to the GPU
+ */
+GLuint gVboID;
+/**
  * Handle to the vec4 of our vertex shader that tracks current position
  */
 GLuint gvPositionHandle;
@@ -29,7 +30,7 @@ GLuint gvPositionHandle;
  * This will be parsed by OpenGL as an array of three vertex attributes with two
  * components (x,y coordinates) each
  */
-const GLfloat gTriangleVertices[] = { 0.0f, 0.5f, -0.5f, -0.5f,
+GLfloat gTriangleVertices[] = { 0.0f, 0.5f, -0.5f, -0.5f,
                                       0.5f, -0.5f };
 
 static void printGLString(const char *name, GLenum s) {
@@ -43,6 +44,59 @@ static void checkGlError(const char* op) {
     }
 }
 
+// todo:
+// 1. try to use a uniform u_time to effect change in vertex coordinates over time
+//    With that, a simple rotation matrix applied in the main() of the vertex shader
+//    should give us continuous rotation.
+//    UPDATE: turns out u_time is not a GLSL built-in, and The Book of Shaders just skips over
+//    how exactly they populate it.  Looking closer at GLSL docs, uniforms act like a bridge between shader program and client,
+//    which is what I've been looking for --
+//      1.1 if I update u_time with current clock in renderFrame()
+//      client-side and then use it as a modifier I should be able to get continuous position updates
+//      mildly influenced by rotation (though it won't really be continuous rotation).
+//      1.2 alternatively, I could try just keeping a modifier variable in the shader itself
+//      and update it on each loop of the shader's main() (taking care to reset it when
+//      it would send vertices out of rendering bounds). UPDATE: seems I need to read up on
+//      how/when the components of a shader are initialized and run -- my mod variable seems
+//      to only receive an update and then either never receives another or is always reset to its
+//      starting value before said update such that the result is a slightly skewed slightly rotated static triangle.
+//      1.3 try using a uniform in the shader to read client side (in renderFrame) the gl_Position vec4 that
+//      results from the rotation applied in-shader, and use that as the new value of gTriangleVertices
+// x2. try the rotation cycle approach for 'fake rotation': works!  Stupid, but technically fulfills the requirement.
+// 3. try using GLM to allow for out-of-box matrix math client-side
+//    and modify the vertex data given to the vertex shader from client-side as
+//    open.gl/drawing does.
+// 4. try applying the rot matrix directly to gl_Position (gl_Pos = rotMat * gl_Pos) after gl_pos
+//    has been set with init data
+
+/**
+ * Simply sets the gl_Position for each vertex to the uploaded vertex data's
+ * X,Y coordinates, specifying 0 for Z since we're in 2D at the moment.
+ */
+const char* gVertexShaderGLES3_noTransform = R"glsl(
+        #version 150 core
+
+        in vec2 position;
+
+        void main()
+        {
+            gl_Position = vec4(position, 0.0, 1.0);
+        }
+)glsl";
+/**
+ * Simply sets the outColor output to solid Plum purple
+ */
+const char* gFragmentShaderGLES3_solidPurple = R"glsl(
+        #version 150 core
+
+        out vec4 outColor;
+
+        void main()
+        {
+            outColor = vec4(0.917647,  0.678431, 0.917647, 1.0);
+        }
+)glsl";
+
 /**
  * Basic vertex shader to use our triangle data to create anchor points, which
  * will be modified by the fragment shader later in the pipeline
@@ -50,6 +104,8 @@ static void checkGlError(const char* op) {
 auto gVertexShader =
         "attribute vec4 vPosition;\n"
         "uniform mat4 rotationMatrix;"
+        //"uniform float u_time;"
+        //"float mod = 0.3f;"
         "void main() {\n"
         /*
          * since vPosition is used as the location to send
@@ -78,15 +134,35 @@ auto gVertexShader =
         // to either communicate the resultant vertex data out to renderFrame()
         // or perform the rotation in renderFrame to be sent into this shader
         // such that the rotations stack and we get the desired spinning shape.
-        "   float angle = 180.0;\n"
+        "   float angle = 45.0;\n"
         "   mat4 rotationMat = mat4(\n"
         "       cos(angle),-sin(angle),0,0,\n"
         "       sin(angle),cos(angle),0,0,\n"
         "       0,0,1,0,\n"
         "       0,0,0,1\n"
         "   );"
-            // rotate the local coordinate space
-            "gl_Position = rotationMat * vPosition;\n"
+        /* approach #1.2: using continuously incrementing modifier on a cycle, I see the triangle transformed
+           only once.  Not clear why, but I'm guessing either the shader's main() loop is not
+           run on every frame and/or when the shader runs on a frame, the whole program runs
+           from scratch such that mod would be reset to its starting value and only receive the first
+           bump forever.
+            // update the vertices on every frame with continuously incrementing
+            // modifier
+        "   mod += 0.001f;\n"
+            // don't want to increase vertex location beyond 1.0 on any axis
+        "   if(mod >= 0.5f){\n"
+        "       mod = 0.0f;\n"
+        "   }\n"
+
+            // rotate the local coordinate space using modified vertices
+            "gl_Position = rotationMat * (vPosition + vec4(mod,mod,mod,0.0f));\n"
+            */
+        /* todo 4: I don't understand why this doesn't work (black bg only)
+         * whereas the gl_Pos = rotMat * vPos approach does sort of work
+        "   vPosition = rotationMat * vPosition;\n"
+        "   gl_Position = vPosition;\n"
+        */
+        "   gl_Position = vPosition;\n"
         "}\n";
 
 /**
@@ -279,6 +355,8 @@ bool setupGraphics(int w, int h) {
     printGLString("Extensions", GL_EXTENSIONS);
 
     LOGI("setupGraphics(%d, %d)", w, h);
+
+    /*
     gProgram = createProgram(gVertexShader, gFragmentShader);
     if (!gProgram) {
         LOGE("Could not create program.");
@@ -292,6 +370,29 @@ bool setupGraphics(int w, int h) {
     glViewport(0, 0, w, h);
     checkGlError("glViewport");
     return true;
+    */
+
+    /// open.gl tutorial ///
+    // our triangle data, with vertices already in device coordinates between -1 and 1
+    float vertices[] = {
+            0.0f,  0.5f, // Vertex 1 (X, Y)
+            0.5f, -0.5f, // Vertex 2 (X, Y)
+            -0.5f, -0.5f  // Vertex 3 (X, Y)
+    };
+    // generate one vertex buffer object and store our handle to it
+    glGenBuffers(1,&gVboID);
+    // make the VBO we just generated the active array
+    glBindBuffer(GL_ARRAY_BUFFER,gVboID);
+    // upload our vertex data to the now-active VBO
+    // GL_STREAM_DRAW mode is important for any vertex data we expect
+    // to be modified client-side and re-uploaded -- 1 draw/upload allows
+    // for frame-by-frame rotation
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+
+    // now that data has been uploaded to the GPU, we need to tell the
+    // GPU what to do with it -- that is where our shaders come in
+    gProgram = createProgram(gVertexShaderGLES3_noTransform,gFragmentShaderGLES3_solidPurple);
+
 }
 
 void renderFrame() {
@@ -318,18 +419,32 @@ void renderFrame() {
     */
 
     // rotation matrix
-    float angle = 15;
-    GLfloat matrix[16] = {
+    float angle = 5;
+    glm::mat4 rotationMatrix = glm::mat4(
             cos(angle),-sin(angle),0,0,
             sin(angle),cos(angle),0,0,
             0,0,1,0,
             0,0,0,1
-    };
+            );
+
+    // todo 3: set the tri vert data based on rotating the previous vert data
+    // such that it rotates each frame by the given angle
+    glm::mul
 
 
+    /* approach #2
     // todo: either roll my own matrix rotation or try to compile GLM...
     // not sure how else to continuously update the vertices on each frame
-    //GLfloat rotatedTriangleVertices[6] = rotateTriangle();
+    rotateTriangle(gTriangleVertices);
+    */
+
+    // todo 1.3: how can I reference the value of vPosition via gvPosition to
+    // check if it's zeroes (uninitialized) and otherwise use it to set tri verts we pass in to shader
+    // as basis for rotation to new verts?
+    // todo 1.3: when is the shader main actually run?
+    // todo 1.3: maybe it;s possible to simply update gl_Position based on current
+    // value like gl_Position = rotationMatrix * gl_Position?  Question then is how to
+    // set the initial value (and only init value) of gl_Position using triangle data array?
 
     // tell OpenGL how to use our vertex data for rendering
     // in this case, the main point of interest is the size parameter, which
@@ -355,6 +470,19 @@ void renderFrame() {
     // render the triangle data array, as three attributes (with two components each)
     glDrawArrays(GL_TRIANGLES, 0, 3);
     checkGlError("glDrawArrays");
+
+
+    /// open.gl tutorial approach with VBO ///
+    // activate our shader program
+    glUseProgram(gProgram);
+    // fetch the index of the named input, position
+    GLint posAttrib = glGetAttribLocation(gProgram, "position");
+    // instruct the vertex shader to consider our vertex data stored
+    // in input position as having two components per attribute (X,Y coords)
+    // with a float data type, not needing normalization to device coords,
+    // stride (space between vertex attribute data) of 0, and offset (space before
+    // vertex attribute data starts) of 0
+    glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
