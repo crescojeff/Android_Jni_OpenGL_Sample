@@ -54,6 +54,15 @@ public class JniStringItemRecyclerViewAdapter extends RecyclerView.Adapter<JniSt
         return mValues.size();
     }
 
+    /**
+     * Adds a string to the adapter data set
+     * @param item a string to be displayed in the {@link RecyclerView}
+     */
+    public void pushItem(String item){
+        mValues.add(item);
+        notifyDataSetChanged();
+    }
+
     public class JniStringViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
         public final TextView mPosView;

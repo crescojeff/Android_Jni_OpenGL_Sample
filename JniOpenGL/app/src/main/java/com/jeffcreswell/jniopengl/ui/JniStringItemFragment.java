@@ -21,11 +21,10 @@ import com.jeffcreswell.jniopengl.ui.jnistrings.JniStringContent;
  */
 public class JniStringItemFragment extends Fragment {
 
-    // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
-    // TODO: Customize parameters
     private int mColumnCount = 1;
     private OnListFragmentInteractionListener mListener;
+    private JniStringItemRecyclerViewAdapter mAdapter;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -34,7 +33,6 @@ public class JniStringItemFragment extends Fragment {
     public JniStringItemFragment() {
     }
 
-    // TODO: Customize parameter initialization
     @SuppressWarnings("unused")
     public static JniStringItemFragment newInstance(int columnCount) {
         JniStringItemFragment fragment = new JniStringItemFragment();
@@ -67,7 +65,8 @@ public class JniStringItemFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new JniStringItemRecyclerViewAdapter(JniStringContent.ITEMS, mListener));
+            mAdapter = new JniStringItemRecyclerViewAdapter(JniStringContent.ITEMS, mListener);
+            recyclerView.setAdapter(mAdapter);
         }
         return view;
     }
@@ -88,6 +87,14 @@ public class JniStringItemFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    /**
+     * Push an item of data to the adapter
+     * @param data item to add to the {@link RecyclerView}
+     */
+    public void pushDataToAdapter(String data){
+        mAdapter.pushItem(data);
     }
 
     /**

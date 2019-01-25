@@ -3,6 +3,8 @@ package com.jeffcreswell.jniopengl;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,15 +16,21 @@ public class MainActivity extends AppCompatActivity implements JniStringItemFrag
     private static final String TAG = "JniGlDemoActivity";
 
     private GlView mGlView;
+    private Button mAddStringsButton;
+    private JniStringItemFragment mFragment;
 
     @Override protected void onCreate(Bundle savedData) {
         super.onCreate(savedData);
-        //mGlView = new GlView(getApplication());
-        //setContentView(mGlView);
         setContentView(R.layout.activity_main);
         mGlView = (GlView) findViewById(R.id.my_gl_surfaceview);
-
-        Log.d(TAG,"random string: "+ JniHooks.randomString());
+        mFragment = (JniStringItemFragment) getSupportFragmentManager().findFragmentById(R.id.my_jnistrings_fragment);
+        mAddStringsButton = (Button) findViewById(R.id.add_strings_btn);
+        mAddStringsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mFragment.pushDataToAdapter(JniHooks.randomString());
+            }
+        });
     }
 
     @Override protected void onPause() {

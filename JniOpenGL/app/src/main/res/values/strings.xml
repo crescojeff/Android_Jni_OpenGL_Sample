@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">JniOpenGL</string>
+    <string name="add_string">Add String</string>
 </resources>

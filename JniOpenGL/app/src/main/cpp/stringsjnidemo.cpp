@@ -165,22 +165,32 @@ Java_com_jeffcreswell_jniopengl_jni_JniHooks_randomString(
     std::uniform_int_distribution<> randomAnimalIndexDistribution(0,
             (sizeof(animalCorpus) / sizeof(std::string))-1);
 
+    // range of string count
+    std::uniform_int_distribution<> randomStringCountDistribution(1,3);
+
     // generate a random index for each array
     int adj1Index = randomAdj1IndexDistribution(randomIndexGenerator);
     int adj2Index = randomAdj2IndexDistribution(randomIndexGenerator);
     int animalIndex = randomAnimalIndexDistribution(randomIndexGenerator);
 
-
-    /* // nah, I like the -ly on everything
-    // check for adjective ending in -ed, which sometimes doesn't take the -ly because English
-    std::string firstAdjective = adjective1Corpus[adj1Index];
-    if(firstAdjective.compare(firstAdjective.size()-2,std::string::npos,"ed") != 0){
-        firstAdjective += "ly";
-    }
-    */
+    // choose randomly between 1 and 3 strings
+    int stringCount = randomStringCountDistribution(randomIndexGenerator);
 
     // concat randomly selected strings into a random silly phrase
-    std::string animalWorthyOfWindyDescription = adjective1Corpus[adj1Index] + "ly " + adjective2Corpus[adj2Index] + " " + animalCorpus[animalIndex];
+    // that includes at least then noun and up to 2 adjectives.
+    // Naturally, the code doesn't work without the animal (or, at least,
+    // it shouldn't).
+    std::string animalWorthyOfWindyDescription;
+    if(stringCount == 3){
+        animalWorthyOfWindyDescription = adjective1Corpus[adj1Index] +
+                "ly " + adjective2Corpus[adj2Index] + " " +
+                animalCorpus[animalIndex];
+    }else if(stringCount == 2){
+        animalWorthyOfWindyDescription = adjective2Corpus[adj2Index] +
+                " " + animalCorpus[animalIndex];
+    }else{
+        animalWorthyOfWindyDescription = animalCorpus[animalIndex];
+    }
 
     // native logcat API logging
     __android_log_print(ANDROID_LOG_DEBUG, "jnigldemo", "JNI returning random adj: %s",

@@ -15,7 +15,7 @@ public class JniStringContent {
      */
     public static final List<String> ITEMS = new ArrayList<String>();
 
-    private static final int COUNT = 25;
+    private static final int COUNT = 1;
 
     static {
         // Add some sample string items to the listview content.

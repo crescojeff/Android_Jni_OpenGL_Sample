@@ -12,7 +12,16 @@
         android:scrollbars="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_above="@+id/add_strings_btn"
+        android:layout_alignParentTop="true"
+        />
+
+    <Button
+        android:id="@+id/add_strings_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_above="@+id/center_placeholder"
+        android:text="@string/add_string"
         />
 
     <FrameLayout
