@@ -18,6 +18,13 @@ public class JniHooks {
     public static native boolean glInit(int width, int height);
 
     /**
+     * Frees native OpenGL rendering resources
+     */
+    /* because of EGL layer, we don't actually need this
+    public static native void glDeinit();
+    */
+
+    /**
      * Instructs native OpenGL layer to render next frame
      */
     public static native void glStepFrame();
