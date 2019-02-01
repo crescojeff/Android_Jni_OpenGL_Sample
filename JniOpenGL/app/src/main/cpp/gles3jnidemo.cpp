@@ -59,8 +59,7 @@ static void checkGlError(const char* op) {
  * A transformation matrix is applied via the uniform u_transformationMat,
  * set by the client
  */
-const char* gVertexShaderSource = R"glsl(
-    #version 300 es
+const char* gVertexShaderSource = R"glsl(#version 300 es
     in vec2 position;
     uniform mat4 u_transformationMat;
     void main()
@@ -71,8 +70,8 @@ const char* gVertexShaderSource = R"glsl(
 /**
  * Sets the outColor output based on uniform u_triangleColor, set by client
  */
-const char* gFragmentShaderSource = R"glsl(
-        #version 300 es
+const char* gFragmentShaderSource = R"glsl(#version 300 es
+        precision mediump float;
         uniform vec3 u_triangleColor;
         out vec4 outColor;
         void main()
